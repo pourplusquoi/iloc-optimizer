@@ -6,15 +6,7 @@ This repository includes a optimizer for "ILOC" language.
 
 ILOC is an intermidiate representation for higher level language. The ILOC instruction set is taken from the book, Engineering A Compiler, published by the Morgan-Kaufmann imprint of Elsevier.
 
-The ILOC operations supported in the simulator fall into four basic categories: computa-tional operations, data movement operations, control-flow operations, and output operations. Tables 1, 2, 3, and 4 describe each group of operations.
-
-![Screen Shot 2018-04-22 at 2.38.49 AM](/Users/yangpan/Desktop/Screen Shot 2018-04-22 at 2.38.49 AM.png)
-
-![Screen Shot 2018-04-22 at 2.47.00 AM](/Users/yangpan/Desktop/Screen Shot 2018-04-22 at 2.47.00 AM.png)
-
-![Screen Shot 2018-04-22 at 2.47.10 AM](/Users/yangpan/Desktop/Screen Shot 2018-04-22 at 2.47.10 AM.png)
-
-![Screen Shot 2018-04-22 at 2.47.31 AM](/Users/yangpan/Desktop/Screen Shot 2018-04-22 at 2.47.31 AM.png)
+The ILOC operations supported in the simulator fall into four basic categories: computa-tional operations, data movement operations, control-flow operations, and output operations.
 
 An ILOC instruction is either a single operation, or a group of operations enclosed insquare brackets and separted by semicolons, as in `[ op1 ; op2 ]`. An instruction label in ILOCconsists of an alphabetic character followed by zero or more alphanumeric characters. Any ILOC instruction may be labeled; the label precedes the instruction and is followed by acolon, as in `L01: add r1, r2 ⇒ r3`, or `L02: [ add r1, r2 ⇒ r3; i2i r0 ⇒ r4 ]`.
 
@@ -37,11 +29,17 @@ Two code optimization algorithms are implemented: ***value numbering*** and ***l
 ## Usage
 
 The optimizer accepts a command line of the form:
+
 ​	`opt [flags] file.i`
+
 where flags specify the optimizations to run (and the order in which to runt them, and `file.i` is the name of the ILOC input file that will be optimized. The optimizer write its output file to `stdout`.
 
 The order in which the optimization switches appear determines the order in which the optimizations apply. For example,
+
 ​	`opt -v -i file.i`
+
 optimizes the file `file.i`, applying value numbering followed by loop-invariant code motion, while the command line:
+
 ​    `opt -i -v file.i`
+
 would apply loop-invariant code motion before value numbering.
