@@ -1,4 +1,4 @@
-# comp506-projects
+# COMP 506: Compiler Construction
 
 This repository includes a optimizer for "ILOC" language.
 
@@ -30,16 +30,16 @@ Two code optimization algorithms are implemented: ***value numbering*** and ***l
 
 The optimizer accepts a command line of the form:
 
-​	`opt [flags] file.i`
+    `opt [flags] file.i`
 
 where flags specify the optimizations to run (and the order in which to runt them, and `file.i` is the name of the ILOC input file that will be optimized. The optimizer write its output file to `stdout`.
 
 The order in which the optimization switches appear determines the order in which the optimizations apply. For example,
 
-​	`opt -v -i file.i`
+    `opt -v -i file.i`
 
 optimizes the file `file.i`, applying value numbering followed by loop-invariant code motion, while the command line:
 
-​    `opt -i -v file.i`
+    `opt -i -v file.i`
 
 would apply loop-invariant code motion before value numbering.
