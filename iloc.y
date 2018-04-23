@@ -328,6 +328,5 @@ int yywrap () { return 1; } /* for flex: only one input file */
 void yyerror (struct Instructions **myStmts, const char *s) {
     syntax_error++;
     fprintf(stderr, "Parser: '%s' around line %d.\n", s, yylineno);
-    free ((void *) s);
     s = NULL;
 }

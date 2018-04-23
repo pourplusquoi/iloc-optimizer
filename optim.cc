@@ -63,6 +63,13 @@ void buildCFG (const vector <const Instruction*> &fromMe, vector <size_t> *lead,
 
         last->push_back (j - 1);
     }
+
+    // add natural edges, i.e. not br/cbr at the end of block
+    for (size_t line : (*last)) {
+        OpCode code = fromMe[line]->op->code;
+        if (code != OpCode::br_ && code != OpCode::cbr_)
+            edges->push_back (make_pair (line, line + 1));
+    }
 }
 
 void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, size_t last, 
@@ -380,7 +387,7 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
 
     // if too many blocks are involved in loop
     // we just give up unrolling it
-    if (involvedLabels.size () > 100)
+    if (involvedLabels.size () > 20)
         return;
 
     // when the looping variable is assigned anywhere in loop, stop unrolling
@@ -406,7 +413,7 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
     size_t psize = parBlock.size (), hsize = headBlock.size ();
 
     // the new parent for remaining case (< 'unrollBy')
-    string extraParLabel = loop.parent + "_" + to_string (nextLabel);
+    string extraParLabel = loop.parent + "X" + to_string (nextLabel);
     vector <const Instruction*> extraParBody;
 
     // add 'nop' after the label
@@ -437,7 +444,7 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
         size_t bsize = bodyBlock.size ();
         
         for (size_t i = 0; i < unrollBy; i++) {
-            string suffix = "_" + to_string (nextLabel + i);
+            string suffix = "X" + to_string (nextLabel + i);
             string newLabel = label + suffix;
 
             // copy instructions from original block
@@ -452,19 +459,19 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
     } // end of for-loop
 
     // this is the label of new head of unrolled loop
-    string newHeadLabel = loop.head + "_" + to_string (nextLabel);
+    string newHeadLabel = loop.head + "X" + to_string (nextLabel);
     
     if (loop.head != loop.tail) {
         // coalesce the head block and the tail block in the body of unrolled loop
         for (size_t i = 0; i < unrollBy - 1; i++) {
-            string linkLabel = loop.tail + "_" + to_string (nextLabel + i);
+            string linkLabel = loop.tail + "X" + to_string (nextLabel + i);
             vector <const Instruction*> linkBody;
             
             linkBody.push_back (new Instruction (linkLabel.c_str ()));
             copyInstructions (tailBlock, &linkBody, 1, tsize - 3);
             copyInstructions (headBlock, &linkBody, 1, hsize - 2);
             modifyBranch (headBlock, &linkBody, &graph, involvedLabels, 
-                loop.head, linkLabel, "_" + to_string (nextLabel + i + 1));
+                loop.head, linkLabel, "X" + to_string (nextLabel + i + 1));
 
             instMap[linkLabel] = std::move (linkBody);
         } // end of for-loop
@@ -475,12 +482,12 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
         newHeadBody.push_back (new Instruction (newHeadLabel.c_str ()));
         copyInstructions (headBlock, &newHeadBody, 1, hsize - 2);
         modifyBranch (headBlock, &newHeadBody, &graph, involvedLabels, 
-            loop.head, newHeadLabel, "_" + to_string (nextLabel));
+            loop.head, newHeadLabel, "X" + to_string (nextLabel));
 
         instMap[newHeadLabel] = std::move (newHeadBody);
 
         // deal with the exit (new tail) block
-        string newTailLabel = loop.tail + "_" + to_string (nextLabel + unrollBy - 1);
+        string newTailLabel = loop.tail + "X" + to_string (nextLabel + unrollBy - 1);
         vector <const Instruction*> newTailBody;
         
         newTailBody.push_back (new Instruction (newTailLabel.c_str ()));
@@ -499,7 +506,7 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
     } // end of if (loop.head != loop.tail)
 
     else { // when loop.head == loop.tail
-        string newHeadLabel = loop.head + "_" + to_string (nextLabel);
+        string newHeadLabel = loop.head + "X" + to_string (nextLabel);
         vector <const Instruction*> newHeadBody;
 
         newHeadBody.push_back (new Instruction (newHeadLabel.c_str ()));
@@ -591,9 +598,6 @@ void loopUnrolling (const vector <const Instruction*> &fromMe,
 
     Graph graph;
     toGraph (fromMe, lead, last, edges, &graph);
-
-    // add natural edges, i.e. no br/cbr at the end of block
-    addNaturalEdges (instMap, order, &graph);
 
     vector <Loop> loops;
     findLoop (graph, &loops);

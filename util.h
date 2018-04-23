@@ -59,10 +59,6 @@ void toGraph (const vector <const Instruction*> &insts, const vector <size_t> &l
     const vector <size_t> &last, const vector <pair <size_t, size_t>> &edges, 
     Graph *graph);
 
-// add natural edges to the graph, i.e. no br/cbr at the end of block
-void addNaturalEdges (const unordered_map <string, vector <const Instruction*>> &instMap, 
-    const vector <string> &order, Graph *graph);
-
 // each entry in loops has the first element as the index of loop begin block
 // and the second element as the index of loop end block in graph
 void findLoop (const Graph &graph, vector <Loop> *loops);

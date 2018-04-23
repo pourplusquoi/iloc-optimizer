@@ -60,19 +60,6 @@ void toGraph (const vector <const Instruction*> &insts, const vector <size_t> &l
         (graph->edges)[tailMap[e.first]].insert (headMap[e.second]);
 }
 
-void addNaturalEdges (const unordered_map <string, vector <const Instruction*>> &instMap, 
-    const vector <string> &order, Graph *graph) {
-
-    // we no not consider the edge from the last block which has no natural edge
-    for (size_t i = 0; i < order.size () - 1; i++) {
-        
-        // when the last instruction of block is not br/cbr, add a natrual edge
-        const Instruction* lastInst = instMap.at (order[i]).back ();
-        if (lastInst->op->code != OpCode::br_ || lastInst->op->code != OpCode::cbr_)
-            (graph->edges)[order[i]].insert (order[i + 1]);
-    }
-}
-
 void dfs (const Graph &graph, const string &idx, unordered_map <string, int> &onStack, 
     unordered_map <string, unordered_set <string>> *body) {
 
