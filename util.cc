@@ -253,7 +253,9 @@ string translate (const Instruction* me) {
     Operation* op = me->op;
 
     // append opcode
-    ins += dict[op->code - OpCode::nop_] + " ";
+    ins += dict[op->code - OpCode::nop_];
+    if (op->code != OpCode::nop_)
+        ins += " ";
 
     size_t key = opcodeMap[op->code - OpCode::nop_];
     switch (key) {

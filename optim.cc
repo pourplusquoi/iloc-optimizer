@@ -624,7 +624,7 @@ void generateCode (const vector <const Instruction*> fromMe, FILE *writeToMe) {
 }
 
 void freeMemory (vector <const Instruction*> &fromMe) {
-    for (const Instruction* inst : fromMe) {
+    for (const Instruction* &inst : fromMe) {
         delete inst;
         inst = nullptr;
     }
