@@ -30,11 +30,21 @@ int main (int argc, char** argv) {
             cout << (error + number + unroll + motion);
             exit (0);
         }
+
+        if (option == "-i") {
+            cout << "-i: code motion not implemented\n";
+            exit (0);
+        }
         
-        options.push_back (option);
+        else options.push_back (option);
     }
 
     char* filename = argv[argc - 1];
+
+    if (strlen (filename) == 2 && filename[0] == '-') {
+        cout << (error + number + unroll + motion);
+        exit (0);
+    }
 
     yyout = stdout;
 

@@ -63,13 +63,6 @@ void buildCFG (const vector <const Instruction*> &fromMe, vector <size_t> *lead,
 
         last->push_back (j - 1);
     }
-
-    // add natural edges, i.e. not br/cbr at the end of block
-    for (size_t line : (*last)) {
-        OpCode code = fromMe[line]->op->code;
-        if (code != OpCode::br_ && code != OpCode::cbr_)
-            edges->push_back (make_pair (line, line + 1));
-    }
 }
 
 void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, size_t last, 
