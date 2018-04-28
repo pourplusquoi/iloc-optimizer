@@ -17,7 +17,8 @@ void buildCFG (const vector <const Instruction*> &fromMe, vector <size_t> *lead,
 
 void valueNumbering (const vector <const Instruction*> &fromMe, 
     vector <const Instruction*> *toMe, 
-    const vector <size_t> &lead, const vector <size_t> &last);
+    const vector <size_t> &lead, const vector <size_t> &last, 
+    const vector <pair <size_t, size_t>> edges);
 
 void loopUnrolling (const vector <const Instruction*> &fromMe, 
     vector <const Instruction*> *toMe, 

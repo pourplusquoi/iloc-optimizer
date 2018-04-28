@@ -63,34 +63,37 @@ void buildCFG (const vector <const Instruction*> &fromMe, vector <size_t> *lead,
 
         last->push_back (j - 1);
     }
+
+    // add natural edges, i.e. not br/cbr at the end of block
+    if (edges != nullptr) {
+        for (size_t i = 0; i < last->size () - 1; i++) {
+            size_t line = (*last)[i];
+            OpCode code = fromMe[line]->op->code;
+            if (code != OpCode::br_ && code != OpCode::cbr_)
+                edges->push_back (make_pair (line, line + 1));
+        }
+    }
 }
 
 void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, size_t last, 
-    vector <const Instruction*> *toMe, size_t nextReg) {
-
-    // memorize the biggest register number
-    size_t tempReg = nextReg;
+    HashMaps &hashMaps, unordered_set <size_t> &removal, 
+    unordered_map <size_t, RewriteInfo> &rewrite, size_t &nextReg) {
 
     // maps variable or constant or expression to value number
-    unordered_map <string, size_t> valDict;
+    unordered_map <string, size_t> &valDict = hashMaps.valDict;
 
     // maps value number to the #line where the variable is assigned
     // and the #line where the variable is re-written
-    unordered_map <size_t, pair <size_t, size_t>> varDict;
+    unordered_map <size_t, pair <size_t, size_t>> &varDict = hashMaps.varDict;
 
     // maps old variable name to new variable name
-    unordered_map <string, string> renameMap;
+    unordered_map <string, string> &renameMap = hashMaps.renameMap;
 
-    // redundent instructions
-    unordered_set <size_t> removal;
-
-    // instructions needs to be re-written
-    // maps the #line of variable need to be memorized
-    // to #line after which memorization should be done
-    // to #lines of variables that need this value
-    unordered_map <size_t, pair <size_t, vector <size_t>>> rewrite;
-
+    // get the next value
     size_t nextVal = 0;
+    for (const auto &keyVal : valDict)
+        nextVal = max (nextVal, keyVal.second);
+
     for (size_t i = lead; i <= last; i++) {
         OpCode code = fromMe[i]->op->code;
 
@@ -135,11 +138,11 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                     // when constant number 'constant' has not been used
                     if (valDict.find (constant) == valDict.end ())
                         valDict[constant] = ++nextVal;
-                    tag = makeHashTag (code, valDict[reg0], 0, valDict[constant]);
+                    tag = makeHashTag (code, valDict[reg0], INT_MAX, valDict[constant]);
                 }
 
                 // the case where opcode is 'not'
-                else tag = makeHashTag (code, valDict[reg0], 0, 0);
+                else tag = makeHashTag (code, valDict[reg0], INT_MAX, 0);
 
                 // when the expression has been evaluated
                 if (valDict.find (tag) != valDict.end ()) {
@@ -274,65 +277,10 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
             default: break;
         } // end of switch
     } // end of for-loop
-
-    // maps the #line that needed to be re-written to the copy target 
-    // variable that holds the value of pre-computed variable
-    unordered_map <size_t, size_t> copyMap;
-
-    // maps the #line after which memorization should be done
-    // to the memorizing instruction to be inserted there
-    unordered_map <size_t, Instruction*> reminder;
-
-    // finish probing, start re-write
-    for (size_t i = lead; i <= last; i++) {
-
-        // when the instruction is redundant, skip it
-        if (removal.find (i) != removal.end ())
-            continue;
-
-        // when the result is needed in subsequent instructions
-        if (rewrite.find (i) != rewrite.end ()) {
-
-            // the source variable used to assign other variables
-            size_t srcReg = fromMe[i]->op->reg2;
-
-            // allocate new variable if reuse is after memorization
-            for (const size_t line : rewrite[i].second)
-                copyMap[line] = (rewrite[i].first < line) ? tempReg : srcReg;
-
-            // when memorization is necessary, since variable has been re-written
-            if (rewrite[i].first < rewrite[i].second.back ()) {
-
-                // build up the assignment instruction (memorize) to be inserted
-                Instruction* inst = new Instruction ();
-                inst->op = new Operation (OpCode::i2i_, fromMe[i]->op->reg2, 0, tempReg++, 0);
-
-                // add the future assignment instruction (memorize) to reminder
-                reminder[rewrite[i].first] = inst;
-            }
-
-            toMe->push_back (new Instruction (fromMe[i]));
-        }
-
-        // when the line need to be re-written
-        else if (copyMap.find (i) != copyMap.end ()) {
-            Instruction* inst = new Instruction ();
-            inst->op = new Operation (OpCode::i2i_, copyMap[i], 0, fromMe[i]->op->reg2, 0);
-
-            toMe->push_back (inst);
-        }
-
-        else toMe->push_back (new Instruction (fromMe[i]));
-
-        // finally, check the reminder if there is any pending instruction
-        // if yes, insert that instruction to target 'toMe'
-        if (reminder.find (i) != reminder.end ())
-            toMe->push_back (reminder[i]);
-    }
 }
 
 void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap, 
-    Graph &graph, Graph &revGraph, const Loop &loop, 
+    Graph &graph, Graph &revGraph, const Loop &loop, unordered_map <string, string> &dependency, 
     size_t nextReg, size_t &nextLabel, size_t unrollBy) {
 
     // decide whether we unroll the loop
@@ -444,7 +392,7 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
             vector <const Instruction*> newBody;
             newBody.push_back (new Instruction (newLabel.c_str ()));
             copyInstructions (bodyBlock, &newBody, 1, bsize - 2);
-            modifyBranch (bodyBlock, &newBody, &graph, 
+            modifyBranch (bodyBlock, &newBody, &graph, &dependency, 
                 involvedLabels, label, newLabel, suffix);
 
             instMap[newLabel] = std::move (newBody);
@@ -463,8 +411,8 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
             linkBody.push_back (new Instruction (linkLabel.c_str ()));
             copyInstructions (tailBlock, &linkBody, 1, tsize - 3);
             copyInstructions (headBlock, &linkBody, 1, hsize - 2);
-            modifyBranch (headBlock, &linkBody, &graph, involvedLabels, 
-                loop.head, linkLabel, "X" + to_string (nextLabel + i + 1));
+            modifyBranch (headBlock, &linkBody, &graph, &dependency, 
+                involvedLabels, loop.head, linkLabel, "X" + to_string (nextLabel + i + 1));
 
             instMap[linkLabel] = std::move (linkBody);
         } // end of for-loop
@@ -474,8 +422,8 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
 
         newHeadBody.push_back (new Instruction (newHeadLabel.c_str ()));
         copyInstructions (headBlock, &newHeadBody, 1, hsize - 2);
-        modifyBranch (headBlock, &newHeadBody, &graph, involvedLabels, 
-            loop.head, newHeadLabel, "X" + to_string (nextLabel));
+        modifyBranch (headBlock, &newHeadBody, &graph, &dependency, 
+            involvedLabels, loop.head, newHeadLabel, "X" + to_string (nextLabel));
 
         instMap[newHeadLabel] = std::move (newHeadBody);
 
@@ -548,23 +496,64 @@ void loopUnrolling (unordered_map <string, vector <const Instruction*>> &instMap
     graph.edges[loop.parent].insert (extraParLabel);
 
     // also maintain the reverse graph
-    reverseGraph (graph, &revGraph);
+    graph.reverseGraph (&revGraph);
 }
 
 void valueNumbering (const vector <const Instruction*> &fromMe, 
     vector <const Instruction*> *toMe, 
-    const vector <size_t> &lead, const vector <size_t> &last) {
+    const vector <size_t> &lead, const vector <size_t> &last, 
+    const vector <pair <size_t, size_t>> edges) {
 
+    // maps label to begin line and end line of the block
+    unordered_map <string, pair <size_t, size_t>> instMap;
     size_t numBlocks = lead.size ();
-    vector <pair <size_t, size_t>> blocks;
-    for (size_t i = 0; i < numBlocks; i++)
-        blocks.push_back (make_pair (lead[i], last[i]));
+
+    for (size_t i = 0; i < numBlocks; i++) {
+        string label = i ? string (fromMe[lead[i]]->label) : "START";
+        instMap[label] = make_pair (lead[i], last[i]);
+    }
+
+    // first modify the graph to be a DAG
+    Graph revGraph, graph (fromMe, lead, last, edges);
+    graph.reverseGraph (&revGraph);
+
+    vector <string> order;
+    sortVertexEBB (graph, revGraph, &order);
+
+    // redundent instructions
+    unordered_set <size_t> removal;
+
+    // instructions needs to be re-written
+    // maps the #line of variable need to be memorized
+    // to #line after which memorization should be done
+    // to #lines of variables that need this value
+    unordered_map <size_t, RewriteInfo> rewrite;
+
+    // maps block start line to computed hash maps for EBB at that point
+    unordered_map <size_t, HashMaps> sofar;
 
     // get next unused register
+    // used to rename in value numbering
     size_t nextReg = nextUnusedReg (fromMe);
+    // memorize the biggest register number
+    size_t tempReg = nextReg;
 
-    for (const auto &block : blocks)
-        valueNumbering (fromMe, block.first, block.second, toMe, nextReg);
+    for (const auto &label : order)  {
+        // get the start line and end line of block
+        const auto &beginEnd = instMap[label];
+
+        // get the hash map from parent if in the same EBB
+        const auto &pars = revGraph.edges[label];
+        if (pars.size () == 1) {
+            size_t parBegin = instMap[*pars.begin ()].first;
+            sofar[beginEnd.first] = sofar[parBegin];
+        }
+
+        valueNumbering (fromMe, beginEnd.first, beginEnd.second, 
+            sofar[beginEnd.first], removal, rewrite, nextReg);
+    }
+
+    writeInstsBack (fromMe, toMe, removal, rewrite, tempReg);
 }
 
 void loopUnrolling (const vector <const Instruction*> &fromMe, 
@@ -589,23 +578,26 @@ void loopUnrolling (const vector <const Instruction*> &fromMe,
             insts.push_back (new Instruction (fromMe[j]));
     }
 
-    Graph graph;
-    toGraph (fromMe, lead, last, edges, &graph);
+    Graph graph (fromMe, lead, last, edges);
 
     vector <Loop> loops;
-    findLoop (graph, &loops);
+    graph.findLoop (&loops);
 
     Graph revGraph;
-    reverseGraph (graph, &revGraph);
+    graph.reverseGraph (&revGraph);
 
     // get next unused register
     size_t nextReg = nextUnusedReg (fromMe);
 
-    size_t nextLabel = 0;
-    for (const auto &loop : loops)
-        loopUnrolling (instMap, graph, revGraph, loop, nextReg, nextLabel, unrollBy);
+    // the dependency for natural control transition
+    unordered_map <string, string> dependency;
 
-    writeInstsBack (instMap, toMe, order);
+    size_t nextLabel = 0;
+    for (const auto &loop : loops) 
+        loopUnrolling (instMap, graph, revGraph, 
+            loop, dependency, nextReg, nextLabel, unrollBy);
+
+    writeInstsBack (instMap, toMe, order, dependency);
 }
 
 void generateCode (const vector <const Instruction*> fromMe, FILE *writeToMe) {

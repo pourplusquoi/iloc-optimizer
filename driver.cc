@@ -73,8 +73,9 @@ int main (int argc, char** argv) {
         
         if (option == "-v") {
             vector <size_t> lead, last;
-            buildCFG (src, &lead, &last);
-            valueNumbering (src, &dst, lead, last);
+            vector <pair <size_t, size_t>> edges;
+            buildCFG (src, &lead, &last, &edges);
+            valueNumbering (src, &dst, lead, last, edges);
 
             freeMemory (src);
             src = std::move (dst);

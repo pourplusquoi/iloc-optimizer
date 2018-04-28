@@ -26,6 +26,12 @@ Two code optimization algorithms are implemented: ***value numbering*** and ***l
 
 3. ***loop-invariant code motion*** (*not implemented*): find computations that are invariant in inner loops andmove them to a place where they execute less often; specified with a -i flag
 
+## How to Build
+
+Go to the directory where `makefile` locates. Use command `make` to build the project. After build, a excutable called `opt` is generated. To clean build files, use command `make clean`. Use command `make wc` to get line counts of code.
+
+Note that comilers clang, clang++, flex, bison are required to build the project.
+
 ## Usage
 
 The optimizer accepts a command line of the form:
