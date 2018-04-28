@@ -251,7 +251,7 @@ bool isPowerOfTwo (size_t num) {
 }
 
 size_t getPower (size_t num) {
-    int res = 0;
+    size_t res = 0;
     while ((num & 1) == 0) {
         res++;
         num >>= 1;
@@ -259,7 +259,7 @@ size_t getPower (size_t num) {
     return res;
 }
 
-bool shiftOptimization (const Instruction *inst) {
+bool shiftOptimizable (const Instruction *inst) {
     if (inst->op->code == OpCode::multI_) {
         // when multiply zero or power of two
         if (inst->op->constant == 0 || isPowerOfTwo (inst->op->constant))
@@ -293,7 +293,7 @@ void writeInstsBack (const vector <const Instruction*> &fromMe,
 
         // when the result is needed in subsequent instructions
         // and cannot be optimized by shift
-        if (rewrite.find (i) != rewrite.end () && !shiftOptimization (fromMe[i])) {
+        if (rewrite.find (i) != rewrite.end () && !shiftOptimizable (fromMe[i])) {
 
             // the source variable used to assign other variables
             size_t srcReg = fromMe[i]->op->reg2;
@@ -325,7 +325,7 @@ void writeInstsBack (const vector <const Instruction*> &fromMe,
         }
 
         // when shift optimization is possible
-        else if (shiftOptimization (fromMe[i])) {
+        else if (shiftOptimizable (fromMe[i])) {
             if (fromMe[i]->op->code == OpCode::multI_) {
 
                 // optimize multiplication with zero
@@ -334,17 +334,19 @@ void writeInstsBack (const vector <const Instruction*> &fromMe,
                         OpCode::loadI_, 0, 0, 0, 0)));
                 
                 // optimize multiplication with power of two
-                else if (isPowerOfTwo (fromMe[i]->op->constant))
+                else {
                     toMe->push_back (new Instruction (nullptr, new Operation (
                         OpCode::lshiftI_, fromMe[i]->op->reg0, 0, 
                         fromMe[i]->op->reg2, getPower (fromMe[i]->op->constant))));
+                }
             }
 
-            // optimize devide power of two
-            else if (fromMe[i]->op->code == OpCode::divI_ && isPowerOfTwo (fromMe[i]->op->constant))
+            // optimize divide power of two
+            else {
                 toMe->push_back (new Instruction (nullptr, new Operation (
                     OpCode::rshiftI_, fromMe[i]->op->reg0, 0, 
                     fromMe[i]->op->reg2, getPower (fromMe[i]->op->constant))));
+            }
         }
 
         else toMe->push_back (new Instruction (fromMe[i]));
