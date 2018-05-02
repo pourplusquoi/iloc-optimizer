@@ -4,7 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <unordered_set>
-#include <limits.h>
+#include <climits>
 #include "optim.h"
 #include "struct.h"
 #include "util.h"
