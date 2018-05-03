@@ -1,4 +1,4 @@
-# COMP 506: Compiler Construction
+# Coursework: Compiler Construction
 
 This repository includes a optimizer for "ILOC" language.
 
