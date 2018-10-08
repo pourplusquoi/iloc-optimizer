@@ -108,7 +108,7 @@ void modifyBranch (const vector <const Instruction*> fromMe,
 
 // help to finalize the branch-related instructions in the tail block
 void finalizeTail (const vector <const Instruction*> &block, 
-    vector <const Instruction*> *newBlock, size_t register, size_t step, 
+    vector <const Instruction*> *newBlock, size_t reg, size_t step, 
     const string &label1, const string &label2);
 
 void writeInstsBack (const vector <const Instruction*> &fromMe, 
