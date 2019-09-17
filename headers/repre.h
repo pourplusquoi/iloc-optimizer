@@ -1,12 +1,11 @@
-
-#ifndef REPRE_H
-#define REPRE_H
+#ifndef REPRE_H_
+#define REPRE_H_
 
 #include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif  // __cplusplus
 
 enum OpCode {
     nop_, add_, addI_, sub_, subI_, mult_, multI_, div_, divI_, 
@@ -40,6 +39,6 @@ void appendInstruction (struct Instructions* toMe, struct Instruction* inst);
 
 #ifdef __cplusplus
 }
-#endif
+#endif  // __cplusplus
 
-#endif
+#endif  // REPRE_H_

@@ -1,11 +1,11 @@
+#ifndef UTIL_H_
+#define UTIL_H_
 
-#ifndef UTIL_H
-#define UTIL_H
-
-#include <vector>
 #include <string>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include "repre.h"
 #include "struct.h"
 
@@ -126,4 +126,4 @@ size_t nextUnusedReg (const vector <const Instruction*> &fromMe);
 // translate encapsulated structure to ILOC code
 string translate (const Instruction* me);
 
-#endif
+#endif  // UTIL_H_

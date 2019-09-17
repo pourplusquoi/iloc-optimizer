@@ -1,10 +1,10 @@
+#ifndef OPTIM_H_
+#define OPTIM_H_
 
-#ifndef OPTIM_H
-#define OPTIM_H
-
-#include <vector>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
 #include "repre.h"
 
 using std::vector;
@@ -29,4 +29,4 @@ void generateCode (const vector <const Instruction*> fromMe, FILE *writeToMe);
 
 void freeMemory (vector <const Instruction*> &fromMe);
 
-#endif
+#endif   // OPTIM_H_

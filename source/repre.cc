@@ -1,7 +1,7 @@
-
 #include <vector>
-#include "repre.h"
-#include "struct.h"
+
+#include "../headers/repre.h"
+#include "../headers/struct.h"
 
 using namespace std;
 

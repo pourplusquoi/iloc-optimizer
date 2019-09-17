@@ -1,7 +1,7 @@
-
 #include <iostream>
-#include "struct.h"
-#include "optim.h"
+
+#include "../headers/struct.h"
+#include "../headers/optim.h"
 
 using namespace std;
 

@@ -1,8 +1,8 @@
-
-#include <queue>
-#include <iostream>
 #include <algorithm>
-#include "util.h"
+#include <iostream>
+#include <queue>
+
+#include "../headers/util.h"
 
 using namespace std;
 

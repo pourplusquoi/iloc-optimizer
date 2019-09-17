@@ -1,13 +1,13 @@
-
-#include <iostream>
-#include <queue>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <queue>
 #include <unordered_set>
-#include <climits>
-#include "optim.h"
-#include "struct.h"
-#include "util.h"
+
+#include "../headers/optim.h"
+#include "../headers/struct.h"
+#include "../headers/util.h"
 
 using namespace std;
 
@@ -138,11 +138,14 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                     // when constant number 'constant' has not been used
                     if (valDict.find (constant) == valDict.end ())
                         valDict[constant] = ++nextVal;
-                    tag = makeHashTag (code, valDict[reg0], INT_MAX, valDict[constant]);
+                    tag = makeHashTag (code, valDict[reg0],
+                                       std::numeric_limits<int>::max(),
+                                       valDict[constant]);
                 }
 
                 // the case where opcode is 'not'
-                else tag = makeHashTag (code, valDict[reg0], INT_MAX, 0);
+                else tag = makeHashTag (code, valDict[reg0],
+                                        std::numeric_limits<int>::max(), 0);
 
                 // when the expression has been evaluated
                 if (valDict.find (tag) != valDict.end ()) {
@@ -156,7 +159,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                     else if (valDict[reg2] != rvalue) {
                         // memorize the #line where the variable is re-written
                         // note that only the smallest #line is kept
-                        if (varDict[valDict[reg2]].second == INT_MAX)
+                        if (varDict[valDict[reg2]].second == std::numeric_limits<int>::max())
                             varDict[valDict[reg2]].second = i - 1;
 
                         string newName = "r" + to_string (nextReg++);
@@ -192,7 +195,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                     else if (valDict[reg2] != lvalue) {
                         // memorize the #line where the variable is re-written
                         // note that only the smallest #line is kept
-                        if (varDict[valDict[reg2]].second == INT_MAX)
+                        if (varDict[valDict[reg2]].second == std::numeric_limits<int>::max())
                             varDict[valDict[reg2]].second = i - 1;
 
                         string newName = "r" + to_string (nextReg++);
@@ -200,7 +203,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                         valDict[newName] = lvalue;
                     }
 
-                    varDict[lvalue] = make_pair (i, INT_MAX);
+                    varDict[lvalue] = make_pair (i, std::numeric_limits<int>::max());
                 }
 
                 break;
@@ -233,7 +236,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                 else if (valDict[reg2] != rvalue) {
                     // memorize the #line where the variable is re-written
                     // note that only the smallest #line is kept
-                    if (varDict[valDict[reg2]].second == INT_MAX)
+                    if (varDict[valDict[reg2]].second == std::numeric_limits<int>::max())
                         varDict[valDict[reg2]].second = i - 1;
 
                     string newName = "r" + to_string (nextReg++);
@@ -260,7 +263,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                 else {
                     // memorize the #line where the variable is re-written
                     // note that only the smallest #line is kept
-                    if (varDict[valDict[reg2]].second == INT_MAX)
+                    if (varDict[valDict[reg2]].second == std::numeric_limits<int>::max())
                         varDict[valDict[reg2]].second = i - 1;
                     
                     // since we don't know the loaded value, rename variable 'reg2' directly
@@ -269,7 +272,7 @@ void valueNumbering (const vector <const Instruction*> &fromMe, size_t lead, siz
                     valDict[newName] = lvalue;
                 }
 
-                varDict[lvalue] = make_pair (i, INT_MAX);
+                varDict[lvalue] = make_pair (i, std::numeric_limits<int>::max());
 
                 break;
             }

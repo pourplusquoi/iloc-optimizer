@@ -1,6 +1,6 @@
 %{
     #include <stdio.h>
-    #include "repre.h"
+    #include "../headers/repre.h"
     int yylineno;
     int syntax_error = 0;
     char *yytext;

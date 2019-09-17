@@ -1,9 +1,9 @@
-
-#ifndef STRUCT_H
-#define STRUCT_H
+#ifndef STRUCT_H_
+#define STRUCT_H_
 
 #include <vector>
-#include <string.h>
+#include <string>
+
 #include "repre.h"
 
 using std::vector;
@@ -100,4 +100,4 @@ struct Instructions {
     }
 };
 
-#endif
+#endif  // STRUCT_H_
